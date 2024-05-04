@@ -1,0 +1,143 @@
+{% extends "dbase.html" %}
+{%load static%}
+
+{% block content %}
+
+<section class='bg-black text-white max-md:pt-20' x-data="assets">
+{% comment %} Coin data from request {% endcomment %}
+{{ assets|json_script:"assets"}}
+{{user|json_script:"user"}}
+{{ assets|json_script:"assets"}}
+{{trades|json_script:"trades"}}
+{% include "components/sidenav.html" %}
+{% include "components/loader.html" %}
+{% include "components/error.html" %}
+{% include "components/alerts.html" %}
+
+{% comment %} main {% endcomment %}
+
+<div class='ml-72 max-md:ml-0 p-5 '>
+
+{% comment %} profile icon {% endcomment %}
+
+<div class='max-md:hidden'>
+{% include "components/path.html" %}
+</div>
+<h1 class="text-2xl font-medium">Trade Assets</h1>
+{% comment %} main container {% endcomment %}
+
+<div class='flex  gap-10 max-md:flex-col pt-10 h-full'>
+
+{%include 'dashboard/trading-form.html'%}
+
+
+<!-- trade history -->
+{%include 'dashboard/trading-history.html'%}
+
+</div>
+{% comment %} main end {% endcomment %}
+
+
+{% comment %} Script {% endcomment %}
+<script>
+
+    document.addEventListener('alpine:init', () => {
+         let form=new FormData(document.querySelector('form'))
+        const assets = JSON.parse(document.getElementById("assets").textContent);
+        const user = JSON.parse(document.getElementById("user").textContent);
+        const trades = JSON.parse(document.getElementById("trades").textContent);
+        console.log(trades);
+        Alpine.data('assets', () => ({
+            closed_trades:trades.filter(trade=>trade.closed==true && trade.expert==false),
+            open_trades:trades.filter(trade=>trade.closed==false && trade.expert==false),
+            expert_trades:trades.filter(trade=>trade.expert==true),
+            query:'',
+            coins: assets,
+            currentCoin:assets[0],
+
+            setCurrentCoin(id){
+                this.currentCoin=this.coins.find(item=>item.symbol==id)
+                this.query=''
+                this.show=false
+                this.matchingCoins=this.coins.slice(0,6)
+            },
+            matchingCoins:assets.slice(0,6),
+            updateCoins(){
+
+                let result=this.coins.filter(
+                    item=>{
+                        return item.name.toLowerCase().startsWith(this.query.toLowerCase())
+                    }
+                )
+                if (result.length>0 && this.query!=''){
+                    this.matchingCoins=result
+                    this.empty=false
+                }
+                else if(result.length==0){
+                    this.matchingCoins=[]
+                    this.empty=true
+                }
+                else{
+                    this.matchingCoins=result.slice(0,6)
+                }
+            },
+            empty:false,
+            show:false,
+            async submitForm(e){
+                e.preventDefault()
+                for(let i of form.keys()){
+                    if(e.target[i]){
+                        form.set(i,e.target[i].value)
+                    }
+                }
+                form.set('currency',this.currentCoin.symbol)
+                if(user.dollar_balance<=0 || user.dollar_balance<form.get("amount")){
+                    this.errorMessage="Insufficient balance, make a deposit!"
+                    this.showError=true
+                }
+                else{
+                                    this.showLoader=true
+                await fetch(`${window.location.href.replace("dashboard","trades")}`,{
+                    body:form,
+                    method:'post',
+                }).then(async (res)=>{
+                    let data=await res.json()
+                    if (res.status==200){
+                        await window.location.reload()
+
+                    }
+                })
+                }
+            },
+            showLoader:false,
+            showError:false,
+            errorMessage:"Something went wrong",
+            changeTradeType(el){
+                let buttons=Array.from(document.querySelector('.button-group').children)
+                buttons.forEach(button=>{
+                    if(button.textContent==el.textContent){
+                        // debugging happening here hahahahaha
+                        button.classList.remove('text-gray-500')
+                    }
+                    else{
+                        button.classList.add('text-gray-500')
+                    }
+                })
+                let templates=Array.from(document.querySelectorAll('.trades'))
+                templates.forEach(template=>{
+                        if(template.classList.contains(el.textContent.toLowerCase().trim())){
+                            template.setAttribute("x-show",true)
+                        }
+                        else{
+                            template.setAttribute("x-show",false)
+                        }
+                    })
+            },
+
+
+        }))
+    })
+</script>
+</section>
+
+{% endblock content %}
