@@ -37,6 +37,7 @@ class Profile(models.Model):
     eth_balance=models.IntegerField(default=0,null=True,blank=True)
     profit=models.IntegerField(default=0,null=True,blank=True)
     trading_profile=models.OneToOneField(CopyTrader,null=True,blank=True,related_name='trading_profile',on_delete=models.PROTECT)
+    verification_document=CloudinaryField('Verification Document',blank=True,null=True)
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name} Profile '
     def serialize(self):
@@ -46,7 +47,12 @@ class Profile(models.Model):
             "btc_balance":self.btc_balance,
             "usdt_balance":self.usdt_balance,
             "profit":self.profit,
-            "trading_profile_id":self.trading_profile.id if self.trading_profile!=None else 0
+            "trading_profile_id":self.trading_profile.id if self.trading_profile!=None else 0,
+            "first_name":self.user.first_name,
+            "last_name":self.user.last_name,
+            'email':self.user.email,
+            'phone':f'{self.phone}',
+            'address':f'{self.address} {self.country}',
         }
 
 class Trade(models.Model):

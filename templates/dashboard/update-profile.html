@@ -1,0 +1,187 @@
+{% extends "dbase.html" %} {%load static%} {% block content %}
+
+<section class="bg-black text-white max-md:pt-24" x-data="assets">
+  {{ wallets|json_script:"wallets"}} {{ history|json_script:"history"}}
+  {{user|json_script:"user"}} {% include "components/sidenav.html" %} {%include
+  "components/loader.html" %} {% include "components/error.html" %} {%include
+  "components/alerts.html" %}
+  <!-- main content -->
+  <div class="ml-72 max-md:ml-0 flex flex-col gap-10 p-5 h-screen">
+    <div class="max-md:hidden mx-auto w-full">
+      {% include "components/path.html" %}
+    </div>
+
+    <!-- Transaction toggle button list -->
+    <section
+      x-data="form"
+      class="h-full bg-black flex flex-col gap-5 px-5 py-40 justify-center items-center"
+    >
+      {%include "components/alerts.html"%} {% include "components/loader.html"
+      %} {% include "components/error.html" %}
+      <h1
+        class="text-2xl max-md:w-full max-md:mt-40 w-1/2 font-semibold text-main"
+      >
+        Verify Your Identity
+      </h1>
+      <form
+        @submit="UploadPhoto"
+        action=""
+        class="w-1/2 text-sm max-md:w-full flex flex-col gap-4 p-10 max-md:p-5 mx-auto bg-neutral-950 shadow-sm rounded-md text-gray-300"
+      >
+        {% csrf_token %}
+        <p>
+          Submit your valid means of ID for you to verify your authenticity of
+          your identity, verification can take 5 minutes to 1 hour
+        </p>
+        <p class="font-medium text-main">Choose Document Type</p>
+        <div
+          class="*:p-5 *:rounded-full *:bg-neutral-900 flex flex-wrap text-xs gap-5 *:cursor-pointer button-group"
+        >
+          <span
+            class="border-main border-2 text-main"
+            @click="changeDocType($el)"
+            >Government ID</span
+          >
+          <span @click="changeDocType($el)">Int'l Passport</span>
+          <span @click="changeDocType($el)">Drivers License</span>
+        </div>
+
+        <span class="flex flex-col gap-3 mt-5">
+          <label
+            for="uploader"
+            class="bg-neutral-900 p-5 rounded-md text-xs text-center cursor-pointer flex gap-2 flex-col items-center justify-center"
+          >
+            <ion-icon
+              name="cloud-upload-outline"
+              class="text-3xl text-main"
+            ></ion-icon>
+            Click to upload. (png, jpg), maximum 500KB
+            <span class="flex items-center gap-2 rounded-md" x-show="upload">
+              <ion-icon
+                name="image-outline"
+                class="text-2xl text-gray-200"
+              ></ion-icon>
+              <span x-text="fileName"></span>
+            </span>
+          </label>
+          <input
+            type="file"
+            name="image"
+            accept="image/*"
+            id="uploader"
+            hidden
+            @change="handleFileChange"
+          />
+        </span>
+
+        <button class="p-5 rounded-full text-lg mt-5 bg-main text-black">
+          Submit Document
+        </button>
+      </form>
+
+      <script>
+        document.addEventListener("alpine:init", () => {
+          let form = new FormData(document.querySelector("form"));
+          Alpine.data("form", () => ({
+            showLoader: false,
+            showError: false,
+            upload: false,
+            errorMessage: "",
+            fileName: "",
+            handleFileChange(e) {
+              this.fileName = e.target.files[0].name;
+              this.upload = true;
+            },
+            changeDocType(el) {
+              let buttons = Array.from(
+                document.querySelector(".button-group").children
+              );
+              console.log(buttons);
+              buttons.forEach((button) => {
+                if (button.textContent == el.textContent) {
+                  // debugging happening here hahahahaha
+                  button.classList.add("border-main", "border-2", "text-main");
+                } else {
+                  button.classList.remove(
+                    "border-main",
+                    "border-2",
+                    "text-main"
+                  );
+                }
+              });
+            },
+            async UploadPhoto(e) {
+              e.preventDefault();
+              let file = e.target.image.files[0];
+              if (e.target.image.files.length == 0) {
+                this.showError = true;
+                this.errorMessage = "Please upload a verification document";
+                return;
+              }
+              if (file.size > 500000) {
+                this.showError = true;
+                this.errorMessage = "File should be less than 500kb";
+                return;
+              }
+              form.set("image", e.target.image.files[0]);
+              this.showLoader = true;
+              await fetch("", {
+                method: "post",
+                body: form,
+              }).then(async (res) => {
+                window.location.assign(
+                  `${location.origin}/accounts/dashboard/`
+                );
+              });
+            },
+          }));
+        });
+      </script>
+    </section>
+  </div>
+  <script src="{% static 'js/fetch-data.js'%}"></script>
+
+  <script>
+    document.addEventListener("alpine:init", () => {
+      const assets = JSON.parse(document.getElementById("wallets").textContent);
+      const history = JSON.parse(
+        document.getElementById("history").textContent
+      );
+      const user = JSON.parse(document.getElementById("user").textContent);
+      console.log(user.last_name[0].toUpperCase());
+      Alpine.data("assets", () => ({
+        deposits: history.deposits,
+        withdrawals: history.withdrawals,
+        showLoader: false,
+        showError: false,
+        errorMessage: "Something went wrong",
+        user: user,
+        changeTradeType(el) {
+          let buttons = Array.from(
+            document.querySelector(".button-group").children
+          );
+          buttons.forEach((button) => {
+            if (button.textContent == el.textContent) {
+              // debugging happening here hahahahaha
+              button.classList.remove("text-gray-500");
+            } else {
+              button.classList.add("text-gray-500");
+            }
+          });
+          let templates = Array.from(document.querySelectorAll(".history"));
+          templates.forEach((template) => {
+            if (
+              template.classList.contains(el.textContent.toLowerCase().trim())
+            ) {
+              template.setAttribute("x-show", true);
+            } else {
+              template.setAttribute("x-show", false);
+            }
+          });
+        },
+      }));
+    });
+  </script>
+</section>
+
+{% endblock content %}

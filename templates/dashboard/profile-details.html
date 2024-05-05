@@ -1,0 +1,98 @@
+{% extends "dbase.html" %} {%load static%} {% block content %}
+
+<section class="bg-black text-white max-md:pt-24" x-data="assets">
+  {{ wallets|json_script:"wallets"}} {{ history|json_script:"history"}}
+  {{user|json_script:"user"}} {% include "components/sidenav.html" %} 
+  {%include "components/loader.html" %} {% include "components/error.html" %} 
+  {%include "components/alerts.html" %}
+  <!-- main content -->
+  <div class="ml-72 max-md:ml-0 flex  flex-col gap-10 p-5 h-screen">
+    <div class="max-md:hidden mx-auto w-full">
+      {% include "components/path.html" %}
+    </div>
+
+    <!-- Transaction toggle button list -->
+    <div
+      class="w-1/2 max-md:w-full self-center p-5 rounded-md bg-sub flex flex-col gap-6 items-center text-white"
+    >
+      <!-- avatar card -->
+      <span
+        class="rounded-full bg-green-500 text-4xl w-24 h-24 flex justify-center items-center gap-2"
+      >
+        <span
+          x-text="user.first_name[0].toUpperCase() + user.last_name[0].toUpperCase() "
+          class="capitalize "
+        ></span>
+      </span>
+
+      <!-- full name details -->
+      <div>
+        <span
+          x-text="user.first_name + '  ' + user.last_name "
+          class="text-2xl text-center block"
+        ></span>
+        <span x-text="" class="text-2xl"></span>
+      </div>
+      <!-- icons to display -->
+      <div class="text-gray-400 flex flex-col justify-center gap-4 ">
+        <span class="flex items-center gap-2">
+          <ion-icon name="mail-outline" class="text-2xl"></ion-icon>
+          <span x-text="user.email"></span>
+        </span>
+        <span class="flex items-center gap-2">
+          <ion-icon name="call-outline" class="text-2xl"></ion-icon>
+          <span x-text="user.phone"></span>
+        </span>
+        <span class="flex items-center gap-2">
+          <ion-icon name="location-outline" class="text-2xl"></ion-icon>
+          <span x-text="user.address"></span>
+        </span>
+      </div>
+    </div>
+  </div>
+  <script src="{% static 'js/fetch-data.js'%}"></script>
+
+  <script>
+    document.addEventListener("alpine:init", () => {
+      const assets = JSON.parse(document.getElementById("wallets").textContent);
+      const history = JSON.parse(
+        document.getElementById("history").textContent
+      );
+      const user = JSON.parse(document.getElementById("user").textContent);
+      console.log(user.last_name[0].toUpperCase());
+      Alpine.data("assets", () => ({
+        deposits: history.deposits,
+        withdrawals: history.withdrawals,
+        showLoader: false,
+        showError: false,
+        errorMessage: "Something went wrong",
+        user: user,
+        changeTradeType(el) {
+          let buttons = Array.from(
+            document.querySelector(".button-group").children
+          );
+          buttons.forEach((button) => {
+            if (button.textContent == el.textContent) {
+              // debugging happening here hahahahaha
+              button.classList.remove("text-gray-500");
+            } else {
+              button.classList.add("text-gray-500");
+            }
+          });
+          let templates = Array.from(document.querySelectorAll(".history"));
+          templates.forEach((template) => {
+            if (
+              template.classList.contains(el.textContent.toLowerCase().trim())
+            ) {
+              template.setAttribute("x-show", true);
+            } else {
+              template.setAttribute("x-show", false);
+            }
+          });
+        },
+      }));
+    });
+  </script>
+</section>
+
+{% endblock content %}

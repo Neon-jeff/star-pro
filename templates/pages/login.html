@@ -19,12 +19,30 @@
         </fieldset>
         <fieldset class='flex gap-5 flex-col'>
             <label for="">Password</label>
-           <input type="password" name="password" class='p-3 rounded-md bg-neutral-900 '  placeholder="Your Password" >
+           <span class="relative bg-neutral-900 rounded-md" >
+            <input type="password" name="password" class='p-3 rounded-md w-full  password '  placeholder="Your Password" >
+            <span class="password-toggle absolute right-5 top-1/2 -translate-y-1/2 p-1 text-xs text-black rounded-md cursor-pointer bg-gray-500 ">show</span>
+           </span>
         </fieldset>
         <button class='bg-gray-200 p-4 rounded-full mt-5 text-black w-1/2 self-center'>Login</button>
         <p class='text-center text-sm font-normal'>No account Yet ? <a href="{%url 'sign-up'%}" class='text-gray-400 pl-3'>Sign Up</a></p>
         <p class='text-center text-gray-600 cursor-pointer'>Forgot Your Password?</p>
     </form>
     </section>
+    <script>
+        let passwordEl=document.querySelector('.password')
+        let toggle=document.querySelector('.password-toggle')
+
+        toggle.addEventListener('click',()=>{
+            if(passwordEl.getAttribute('type')=='password'){
+                passwordEl.setAttribute('type','text')
+                toggle.textContent='Hide'
+            }
+            else{
+                passwordEl.setAttribute('type','password')
+                toggle.textContent='Show'
+            }
+        })
+    </script>
 </main>
 {%endblock%}

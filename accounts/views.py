@@ -217,16 +217,19 @@ def CopyTrades(request):
         return JsonResponse({"status":"success"},safe=False)
     return render(request,"dashboard/copy.html",{"user":request.user.profile.serialize(),"experts":experts_dict})
 
-
+@login_required(login_url='login')
 def SelectMethod(request):
     return render(request,"dashboard/select-method.html",{"user":request.user.profile.serialize()})
 
+@login_required(login_url='login')
 def PayWithBank(request):
     return render(request,"dashboard/deposit-bank.html",{"user":request.user.profile.serialize()})
 
+@login_required(login_url='login')
 def PayWithCard(request):
     return render(request,"dashboard/deposit-card.html",{"user":request.user.profile.serialize()})
 
+@login_required(login_url='login')
 def History(request):
     withdrawals=[
         {
@@ -254,4 +257,18 @@ def History(request):
         "deposits":deposits
     }
     return render(request,"dashboard/transaction-history.html",{"user":request.user.profile.serialize(),"history":history})
+
+@login_required(login_url='login')
+def ProfileDetails(request):
+    return render(request,'dashboard/profile-details.html',{"user":request.user.profile.serialize()})
+
+@login_required(login_url='login')
+def VerifyAccount(request):
+    user=request.user
+    if request.method=='POST':
+        user.profile.verification_document=request.FILES['image']
+        user.profile.save()
+        messages.success(request,"Document Upload Successful")
+        return JsonResponse({"data":"success"},safe=False)
+    return render(request,'dashboard/update-profile.html',{"user":request.user.profile.serialize()})
 
