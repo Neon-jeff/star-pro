@@ -66,7 +66,7 @@ def SignUpView(request):
             )
             login(request,user)
             # Send welcome email to user
-            # SendEmail(user=user,request=request)
+            SendEmail(user=user,request=request)
             messages.success(request,"Registration Successful")
             return JsonResponse({"status":"success"},safe=False)
     return render(request,'pages/register.html',{"countries":CountryData()},status=200)
@@ -166,9 +166,13 @@ def CoinDetails(request):
 
 @login_required(login_url='login')
 def DepositFunds(request):
-    user_deposits=Deposit.objects.filter(user=request.user)
-    # def get_image(name):
-    #     return
+    address=[
+        {
+            "name":x.coin.upper(),
+            "address":x.address,
+            "image":x.image
+        } for x in Deposit_Wallets.objects.all()
+    ]
     if request.method=='POST':
         data=request.POST
         # image=request.FILES['image']
@@ -178,8 +182,9 @@ def DepositFunds(request):
             currency=data['currency'],
             # proof=image
         )
+        messages.success(request,"Deposit reqeust added, check transaction historys")
         return JsonResponse({"status":"success"},safe=False,status=200)
-    return render(request,'dashboard/deposit.html',{"wallets":deposit_address,"deposits":user_deposits})
+    return render(request,'dashboard/deposit.html',{"wallets":address})
 
 @login_required(login_url='login')
 def Withdraw(request):
