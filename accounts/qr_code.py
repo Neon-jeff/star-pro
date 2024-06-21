@@ -29,5 +29,3 @@ def CreateQRCode(coin,address):
     resp= requests.post("https://api.imgbb.com/1/upload",data=data)
     # Perform Error Handling here
     return resp.json()['data']['url']
-
-
